@@ -1,0 +1,130 @@
+name: Deploy Web (PWA)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📚 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔧 Setup Turborepo Remote Cache
+        uses: rharkor/caching-for-turbo@v1.5
+
+      - name: 🏗️ Build web app
+        run: pnpm turbo build --filter=web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
+
+      - name: 📦 Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: 🔗 Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/web
+
+      - name: 🏗️ Build Project Artifacts for Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: 🚀 Deploy to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> $GITHUB_OUTPUT
+        working-directory: apps/web
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "## 🚀 Web App Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment successful!" >> $GITHUB_STEP_SUMMARY
+
+      - name: 💬 Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Preview Deployment\n\n**URL:** ${{ steps.deploy.outputs.url }}\n\n✅ Your changes are ready for preview!`
+            })
+
+  # Smoke tests after deployment
+  smoke-tests:
+    name: 🧪 Smoke Tests
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📚 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🧪 Run Playwright smoke tests
+        run: pnpm --filter=web run test:e2e:smoke
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ needs.deploy.outputs.url }}
+
+      - name: 📊 Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/

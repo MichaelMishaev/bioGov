@@ -1,0 +1,259 @@
+awesome—let’s lock the *build plan* first. Below is a combined **business-systems analyst + technical** blueprint for a PWA that guides Israeli SMBs through VAT/Income-Tax/NI setup, licensing, renewals, and recurring compliance. I’ve included **authoritative deep links**, **data sources**, **UI/UX rules**, and a **step-by-step delivery plan** using 2025 updates.
+
+---
+
+# 1) Core scope & user jobs (MVP)
+
+**Target users**
+
+* Solo self-employed (עוסק פטור / עוסק מורשה), micro-Ltds (חברה בע״מ קטנה), service trades that may need a Business License (רישוי עסקים).
+
+**Top jobs the app must do**
+
+1. **“Open my business properly” wizard**
+
+   * Decide “Exempt” vs “Authorized” VAT dealer, list documents, open files, and link to the right online forms (VAT 821, NI self-employed, etc.). ([Government of Israel][1])
+2. **Business Licensing (רישוי עסקים)** eligibility & path finder by activity + location. ([Government of Israel][2])
+3. **Compliance calendar** (VAT/withholding/NI deadlines) with push reminders. (15th/16th/23rd rules; 2025 schedule). ([Government of Israel][3])
+4. **“What docs do I need right now?”** (bank proof, ID, lease, etc.), with dynamic checklist mapped to the chosen path (e.g., VAT-821). ([Government of Israel][4])
+5. **Renewals & updates** (change dealer details, close VAT file, license renewals). ([Government of Israel][5])
+
+**Why now**
+
+* 2025 updates: VAT rate is **18%** (since Jan 1, 2025). Israel is phasing in **e-invoicing allocation numbers** and a **reference number** requirement—your app can keep SMBs compliant. ([dglaw.co.il][6])
+
+---
+
+# 2) Canonical sources & deep links (use in product)
+
+**Identity & accounts**
+
+* **Gov National Login (הזדהות לאומית / MyGov):** info + login entry points your UX should link to before sending users to any secured gov service.
+
+  * MyGov hub: [https://my.gov.il/](https://my.gov.il/) (identity required) ([my.gov.il][7])
+  * National e-ID FAQ / signup: ([Government of Israel][8])
+
+**Taxes & VAT**
+
+* **VAT authorized dealer (Form 821) – open online** (English & Hebrew service pages): ([Government of Israel][1])
+* **Exempt dealer – open online:** ([Government of Israel][9])
+* **Verify dealer status (online lookup):** ([Government of Israel][10])
+* **VAT topic hub (change details, closure, etc.):** ([Government of Israel][5])
+* **Monthly deadlines (rules):** 15/16/23 guidance (official). ([Government of Israel][3])
+
+**National Insurance (ביטוח לאומי)**
+
+* **Self-employed registration & criteria:** pages with 2025 thresholds & how-to. ([www.btl.gov.il][11])
+* **Single flow (Tax Authority + NI) announcement (2024→ live):** one digital process to open both files. ([www.btl.gov.il][12])
+* **NI personal area:** ([ps.btl.gov.il][13])
+
+**Business Licensing (רישוי עסקים)**
+
+* Gov landing + “Business Licensing Revolution” explainer; use to pre-screen activities needing a license & which ministries approve. ([Government of Israel][2])
+* **Apply for a business license** (online handoff to municipality): ([Government of Israel][14])
+* **Open data (who needs a license) dataset**—can power your eligibility checker & content. ([data.gov.il][15])
+
+**Companies / Partnerships**
+
+* **Corporations Authority** (basic free extracts; paid full extracts). Use API datasets for prefill/validation. ([Government of Israel][16])
+
+**Legal & privacy (what your app must follow)**
+
+* **Privacy Protection (Data Security) Regs (2017)** English explainer + official text (applies to any personal-data DB). ([Government of Israel][17])
+* **Amendment 13 (2025 updates):** new duties (DPO/DSO triggers, rights notices). Use in privacy design. ([DataGuidance][18])
+* **Accessibility**: Israeli **IS-5568** (WCAG 2.0 AA baseline; Part 1 updated 2023; guidance 2025). Your PWA must comply & publish an accessibility statement. ([Government of Israel][19])
+
+---
+
+# 3) Product requirements (BRD-style)
+
+## 3.1 User stories (priority)
+
+* As a **new self-employed**, I answer a few questions and get:
+  (a) the correct VAT path (exempt/authorized) with **Form 821** or **exempt flow**,
+  (b) NI registration steps, and
+  (c) a dynamic checklist + deep links. ([Government of Israel][1])
+* As a **café owner**, I see if I need a **Business License**, which “Approval Authorities” apply (e.g., Health Ministry), required docs, fees, SLA, and **apply** at the right municipal portal. ([Government of Israel][20])
+* As an **active dealer**, I get a **compliance calendar** with push alerts for **15th/16th/23rd** & special postponements, plus quick links to file. ([Government of Israel][3])
+* As a **Ltd**, I can fetch my **basic company info** (via datasets) to prefill forms. ([data.gov.il][21])
+
+## 3.2 Functional scope (MVP)
+
+* **Eligibility & pathfinder engine**: inputs (business activity, revenue estimate, location, employees soon/none), outputs (dealer type, license need, next actions, documents). (Sources above.)
+* **Doc checklist generator** mapped to each step (e.g., bank proof for 821). ([Government of Israel][4])
+* **Smart deep-link launcher** (SSO first → target service): MyGov → VAT/NI/License. ([my.gov.il][7])
+* **Compliance calendar** with Israel-specific rules, holidays, and per-user cadence (monthly/bi-monthly). ([Government of Israel][3])
+* **Knowledge cards** (short, authoritative): VAT 18% since 1-Jan-2025; e-invoice ref/allocation roadmap (explain simply). ([dglaw.co.il][6])
+* **Company lookup autofill** (basic data from ICA datasets). ([data.gov.il][22])
+
+## 3.3 Non-functional
+
+* **Accessibility**: IS-5568 Part 1 (WCAG 2.0 AA) RTL first; accessibility statement page. ([Government of Israel][19])
+* **Privacy & security**: classify DB according to Israeli regs; role-based access, encryption at rest, incident logbook, DSR (access/correct). ([Government of Israel][23])
+* **Offline-first PWA**: service worker caching for guides, checklists, and saved tasks; sync queue for reminders.
+* **Localization**: HE (default) + EN/RU later; fully RTL-aware typography, numerals, forms.
+
+---
+
+# 4) Technical architecture (high-level)
+
+**Front end (PWA)**
+
+* **Next.js + React** (App Router), **TypeScript**, **RTL** support, **Service Worker** (Workbox).
+* **State**: Redux Toolkit/Query or TanStack Query for server cache; Zod for schema validation.
+* **Storage**: IndexedDB (idb) for offline checklists, setups, calendar; local encrypted vault for tokens (WebCrypto).
+
+**Back end**
+
+* **API**: Node.js (NestJS or Express), TypeScript.
+* **Data**: Postgres (user profiles, checklists, schedules, audit); Redis (jobs/queues for reminders).
+* **Integrations (read-only / deep link)**
+
+  * **Gov services**: we *don’t* impersonate; we **route** users to official flows after SSO (links above).
+  * **Open data**: pull and cache **ICA** company datasets & **Business Licensing** dataset for eligibility search. ([data.gov.il][21])
+* **Compliance calendar engine**: rules encoding (15/16/23 + postponements) with an override table per official notices. ([Government of Israel][3])
+* **Content pipeline**: admin CMS (Headless—e.g., Strapi) for Hebrew micro-guides; keep citations per card.
+
+**Security/Privacy**
+
+* **Pseudonymous IDs**; separate PII; encrypted at rest; access logging; annual risk assessment in line with **Data Security Regs**; if Amendment 13 thresholds hit (DB scope/sensitivity), appoint DPO/DSO. ([Government of Israel][17])
+
+---
+
+# 5) UI/UX—what “great” looks like (Israel-specific)
+
+**Foundations**
+
+* **Government UX principles & service-design** patterns (clear language, stepwise flows, mobile-first). ([National-Digital-Agency][24])
+* **Israeli Government Design System** references (layout rhythm, inputs, alerts). ([National-Digital-Agency][25])
+* **Accessibility**: Hebrew RTL, keyboard order, focus states, form labels, contrast; publish **Accessibility Statement**. ([Government of Israel][26])
+
+**Key screens**
+
+1. **Entry quiz (60–90s)** → instantly shows: dealer type suggestion, NI step, licensing need. (Include an upfront “This uses official gov rules & links.”)
+2. **Action plan** (kanban cards): “Open VAT file”, “Register NI”, “Check license”. Each card opens: “What you need” → “How to do it” → **“Go to gov service” link** (SSO prompt). ([Government of Israel][1])
+3. **Compliance calendar** with color codes + auto reminders (choose monthly/bi-monthly); tooltips cite the **15/16/23** rules. ([Government of Israel][3])
+4. **Licensing checker**: choose activity & city → show whether **Business License** is needed, who approves, and the relevant **municipal portal** link. ([Government of Israel][20])
+5. **Knowledge cards** (e.g., VAT 18% in 2025; e-invoice: “reference” required from 2025; allocation numbers thresholds 2026-2028). ([dglaw.co.il][6])
+
+---
+
+# 6) Data model (starter)
+
+* **User**: id, language, business_stage, city, consent, accessibility_needs.
+* **BusinessProfile**: type (self-employed/Ltd), dealer_suggestion, activity_code(s), municipality_id, employees (y/n).
+* **Task**: key (vat_open_821, ni_register, license_check…), status, deps, deadline_rule (e.g., “15th VAT”), deeplink_url, required_docs[].
+* **ComplianceRule**: code (VAT_PERIODIC, WITHHOLDING, VAT_DETAILED), rule_text, official_source_url. ([Government of Israel][3])
+* **DatasetCache**: ica_company_basic, business_licensing_catalog (with update_at + source). ([data.gov.il][21])
+
+---
+
+# 7) Build steps (end-to-end)
+
+**Sprint 0 — governance & compliance**
+
+1. Approve **legal basis** (consent + legitimate interest), draft **Privacy Notice** reflecting **Data Security Regs & Amendment 13** rights; appoint roles if scope requires. ([Government of Israel][23])
+2. Accessibility plan per **IS-5568**; define testing (screen readers, keyboard nav) + **Accessibility Statement** page. ([Government of Israel][19])
+
+**Sprint 1 — MVP skeleton**
+3) Next.js PWA scaffolding (HE RTL), Service Worker (Workbox), IndexedDB cache, auth-less first release.
+4) Content studio (Strapi) + “knowledge cards” with **inline citations** to gov pages.
+
+**Sprint 2 — Eligibility & checklists**
+5) Encode **dealer decision** logic (inputs: projected revenue, sector flags that force “authorized”) and NI triggers; surface docs needed for **Form 821** and exempt flow. ([Government of Israel][1])
+6) Add **NI registration** guidance (multi-annual report, or the new single flow). ([www.btl.gov.il][27])
+
+**Sprint 3 — Licensing**
+7) Activity → license need decision using **Business Licensing** dataset + ministry approval map; link to **apply** service. ([data.gov.il][15])
+
+**Sprint 4 — Compliance calendar**
+8) Implement deadline rules (15/16/23) + per-month 2025 dates + holiday adjustments table. Push notifications and iCal export. ([Government of Israel][3])
+
+**Sprint 5 — Company data autofill (nice-to-have)**
+9) Basic company info lookup from **ICA** datasets to prefill forms (name, number, status). ([data.gov.il][22])
+
+**Sprint 6 — Quality & release**
+10) **A11y** audit (IS-5568 AA), Hebrew content proofing; privacy & security review per Israeli regs. ([Kol Zchut][28])
+
+---
+
+# 8) QA & compliance checklists
+
+**Functional**
+
+* [ ] VAT pathfinder returns **correct** result for edge sectors; 821 doc list matches the official service page. ([Government of Israel][4])
+* [ ] NI flow shows both **single digital process** and **multi-annual report** fallback. ([www.btl.gov.il][12])
+* [ ] Licensing checker points to the right **municipal** application & approval authorities list. ([Government of Israel][20])
+* [ ] Calendar dates match **gov rules**; postponements are applied when announced. ([Government of Israel][3])
+
+**Legal/privacy**
+
+* [ ] Data map + risk assessment per **Data Security Regs**; DSR workflows (access/correct) exposed in UI per **Amendment 13**. ([Government of Israel][17])
+
+**Accessibility**
+
+* [ ] IS-5568 AA: forms, focus, contrast, errors, RTL; publish **Accessibility Statement**. ([Government of Israel][26])
+
+---
+
+# 9) Future: e-invoicing bridge (Phase 2)
+
+* Educational card + optional helper for the **Reference Number (2025)** and **Allocation Number** thresholds (15k→10k→5k 2026-2028), with links to official docs; do **not** submit on user’s behalf—just guide & checklist. ([KPMG][29])
+
+---
+
+# 10) Known constraints & decisions
+
+* **No scraping / impersonation** of gov flows—only **deep links** after **MyGov** authentication. ([my.gov.il][7])
+* **Content changes**: centralize in CMS with **citations** (Gov.il pages get updated; your app must version your guidance). ([Government of Israel][30])
+* **Where facts differ** (e.g., VAT deadlines moved due to holidays), the **official gov notice** takes precedence. ([Government of Israel][3])
+
+---
+
+## Quick link roll-up (use these in-app)
+
+* **Open VAT (Authorized dealer 821):** (HE/EN) ([Government of Israel][4])
+* **Open VAT (Exempt dealer):** ([Government of Israel][9])
+* **NI self-employed (how-to / digital one-flow):** ([www.btl.gov.il][11])
+* **Business licensing hub + apply:** ([Government of Israel][20])
+* **Deadlines (15/16/23):** ([Government of Israel][3])
+* **Company info (ICA datasets):** ([data.gov.il][21])
+* **Privacy regs (Israel):** ([Government of Israel][17])
+* **Accessibility (IS-5568):** ([Government of Israel][19])
+* **VAT now 18% (2025):** ([dglaw.co.il][6])
+* **E-invoice (reference & allocation):** ([KPMG][29])
+
+---
+
+If you want, I can turn this into a **clickable product spec** (with screen mocks and route map) or generate a **sample Next.js PWA skeleton** with the eligibility rules + calendar already wired to these sources.
+
+[1]: https://www.gov.il/en/service/vat-821?utm_source=chatgpt.com "Application to become an authorized dealer (form 821) - Gov.il"
+[2]: https://www.gov.il/he/departments/topics/busines-licensing/govil-landing-page?utm_source=chatgpt.com "רישוי עסקים - Gov.il"
+[3]: https://www.gov.il/he/pages/pa151025-2?utm_source=chatgpt.com "קביעת מועדי הדיווח והתשלום - דוחות תקופתיים מע\"מ, מקדמות מס ..."
+[4]: https://www.gov.il/he/service/vat-821?utm_source=chatgpt.com "בקשה לפתיחת תיק עוסק מורשה (טופס 821) | רשות המסים בישראל"
+[5]: https://www.gov.il/en/departments/topics/value_added_tax/govil-landing-page?utm_source=chatgpt.com "Value added tax (VAT) - Gov.il"
+[6]: https://www.dglaw.co.il/wp-content/uploads/2025/03/DG-doing-business-in-Israel-2025.pdf?utm_source=chatgpt.com "Doing Business In Israel - 2025 | DG"
+[7]: https://my.gov.il/?utm_source=chatgpt.com "אזור אישי ממשלתי"
+[8]: https://www.gov.il/he/pages/signup_sso_faq?utm_source=chatgpt.com "מערכת הזדהות לאומית מערכת ההזדהות הלאומית - Gov.il"
+[9]: https://www.gov.il/he/service/request-open-exempt-dealer-via-internet?utm_source=chatgpt.com "בקשה לפתיחת תיק עוסק פטור באמצעות האינטרנט | רשות המסים בישראל"
+[10]: https://www.gov.il/he/service/vat-apply-online?utm_source=chatgpt.com "בקשה לקבלת פרטי עוסק מורשה במס ערך מוסף באופן מקוון - Gov.il"
+[11]: https://www.btl.gov.il/Insurance/National%20Insurance/type_list/Self_Employed/Pages/default.aspx?utm_source=chatgpt.com "עובד עצמאי - פירוט סוגי המעמד וחובת תשלום"
+[12]: https://www.btl.gov.il/About/news/Pages/ArchiveFolder/2025/PtictTik.aspx?utm_source=chatgpt.com "שירות חדש לעצמאים! פתיחת תיק עצמאי ברשות המסים ובביטוח ..."
+[13]: https://ps.btl.gov.il/?utm_source=chatgpt.com "המוסד לביטוח לאומי - שירות אישי"
+[14]: https://www.gov.il/he/service/application-for-new-business-license?utm_source=chatgpt.com "בקשה לרישיון עסק | משרד הפנים - Gov.il"
+[15]: https://data.gov.il/dataset/business-licensing-br7?utm_source=chatgpt.com "רישוי עסקים - מאגרי מידע - Government Data"
+[16]: https://www.gov.il/he/service/company_extract?utm_source=chatgpt.com "נסח מלא או מידע בסיסי בחינם על חברות ושותפויות | רשות התאגידים"
+[17]: https://www.gov.il/en/pages/data_security_eng?utm_source=chatgpt.com "Privacy Protection (Data Security) Regulations - Gov.il"
+[18]: https://www.dataguidance.com/jurisdictions/israel?utm_source=chatgpt.com "Israel | Jurisdictions"
+[19]: https://www.gov.il/BlobFolder/legalinfo/israeli_accessibility_standards_pdf/he/sitedocs_si-5568-1-september-2023.pdf?utm_source=chatgpt.com "ת\"י 5568 חלק 1 - קווים מנחים לנגישות תכנים באינטרנט - Gov.il"
+[20]: https://www.gov.il/he/departments/topics/business_licensure/govil-landing-page?utm_source=chatgpt.com "רישוי עסקים - Gov.il"
+[21]: https://data.gov.il/dataset/ica_companies?utm_source=chatgpt.com "מאגר חברות - רשם החברות - מאגרי מידע - Government Data"
+[22]: https://data.gov.il/dataset/ica_companies/resource/f004176c-b85f-4542-8901-7b3176f9a054?utm_source=chatgpt.com "מאגר חברות - רשם החברות - רשימת החברות - Government Data"
+[23]: https://www.gov.il/BlobFolder/legalinfo/data_security_regulation/en/PROTECTION%20OF%20PRIVACY%20REGULATIONS.pdf?utm_source=chatgpt.com "PROTECTION OF PRIVACY REGULATIONS (DATA ... - Gov.il"
+[24]: https://harhayeda.gov.il/guides-digital-transformation/12tips-design/?utm_source=chatgpt.com "12 העקרונות לעיצוב שירות דיגיטלי"
+[25]: https://harhayeda.gov.il/guides-digital-transformation/design-system-gov/?utm_source=chatgpt.com "כלים לעיצוב ממשקי משתמש"
+[26]: https://www.gov.il/en/Departments/Guides/website_accessibility?chapterIndex=2&utm_source=chatgpt.com "Making the Web Accessible - Gov.il"
+[27]: https://www.btl.gov.il/English%20Homepage/Insurance/National%20Insurance/Detailsoftypes/SelfEmployedPerson/Pages/HowtoRegister.aspx?utm_source=chatgpt.com "Opening a self-employed file at the NII"
+[28]: https://www.kolzchut.org.il/he/%D7%94%D7%A0%D7%92%D7%A9%D7%AA_%D7%90%D7%AA%D7%A8%D7%99_%D7%90%D7%99%D7%A0%D7%98%D7%A8%D7%A0%D7%98_%D7%95%D7%90%D7%A4%D7%9C%D7%99%D7%A7%D7%A6%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA?utm_source=chatgpt.com "הנגשת אתרי אינטרנט ואפליקציות לאנשים עם מוגבלות (הליך) – כל-זכות"
+[29]: https://assets.kpmg.com/content/dam/kpmg/il/pdf/vat_software-houses-ENG.pdf?utm_source=chatgpt.com "Israel Invoice Model API Description - Version 2.0 / 7.2024"
+[30]: https://www.gov.il/en/departments/targetaudience/taxes-audience-open-new-business/govil-landing-page?utm_source=chatgpt.com "Business founders - Gov.il"

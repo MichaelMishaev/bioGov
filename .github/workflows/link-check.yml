@@ -1,0 +1,113 @@
+name: Government Links Health Check
+
+on:
+  schedule:
+    # Run every Monday at 9 AM Israel time (7 AM UTC)
+    - cron: '0 7 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-links:
+    name: 🔗 Check Government Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📚 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔗 Check all government links
+        id: check-links
+        run: |
+          pnpm --filter=@biogov/government-api run check-links > link-report.txt
+          cat link-report.txt
+        continue-on-error: true
+
+      - name: 📊 Parse results
+        id: parse
+        run: |
+          BROKEN_COUNT=$(grep -c "BROKEN" link-report.txt || echo "0")
+          echo "broken_count=$BROKEN_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$BROKEN_COUNT" -gt 0 ]; then
+            echo "has_broken_links=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_broken_links=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📤 Upload link report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: link-health-report
+          path: link-report.txt
+
+      - name: 🚨 Create issue if links are broken
+        if: steps.parse.outputs.has_broken_links == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('link-report.txt', 'utf8');
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔗 Broken Government Links Detected',
+              body: `## 🚨 Weekly Link Health Check Failed
+
+            **Broken Links Found:** ${{ steps.parse.outputs.broken_count }}
+
+            ### Details
+
+            \`\`\`
+            ${report}
+            \`\`\`
+
+            ### Action Required
+
+            Please review the broken links and update:
+            - Knowledge cards in Strapi
+            - Government link references in code
+            - Documentation files
+
+            ### Priority
+
+            - 🔴 **Critical**: Links to VAT forms, NI registration, MyGov
+            - 🟡 **Medium**: Links to information pages
+            - 🟢 **Low**: Links to guides and FAQs
+
+            **Note**: This issue was automatically created by the weekly link health check workflow.
+            `,
+              labels: ['documentation', 'government-links', 'urgent']
+            });
+
+            console.log('Created issue:', issue.data.html_url);
+
+      - name: 📊 Summary
+        run: |
+          echo "## 🔗 Government Links Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date +'%Y-%m-%d %H:%M')" >> $GITHUB_STEP_SUMMARY
+          echo "**Broken Links:** ${{ steps.parse.outputs.broken_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.parse.outputs.has_broken_links }}" == "true" ]; then
+            echo "❌ Some links are broken. An issue has been created." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All government links are healthy!" >> $GITHUB_STEP_SUMMARY
+          fi

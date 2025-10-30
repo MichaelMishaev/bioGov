@@ -1,0 +1,128 @@
+name: Deploy Strapi CMS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/strapi/**'
+  workflow_dispatch:
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  deploy:
+    name: 🚀 Deploy Strapi to AWS EC2
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📚 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔧 Setup Turborepo Remote Cache
+        uses: rharkor/caching-for-turbo@v1.5
+
+      - name: 🏗️ Build Strapi
+        run: pnpm turbo build --filter=strapi
+        env:
+          DATABASE_HOST: ${{ secrets.STRAPI_DB_HOST }}
+          DATABASE_PORT: ${{ secrets.STRAPI_DB_PORT }}
+          DATABASE_NAME: ${{ secrets.STRAPI_DB_NAME }}
+          DATABASE_USERNAME: ${{ secrets.STRAPI_DB_USERNAME }}
+          DATABASE_PASSWORD: ${{ secrets.STRAPI_DB_PASSWORD }}
+          ADMIN_JWT_SECRET: ${{ secrets.STRAPI_ADMIN_JWT_SECRET }}
+          API_TOKEN_SALT: ${{ secrets.STRAPI_API_TOKEN_SALT }}
+
+      - name: 🐳 Build Docker image
+        run: |
+          docker build -t bioGov-strapi:${{ github.sha }} -f apps/strapi/Dockerfile apps/strapi
+          docker tag bioGov-strapi:${{ github.sha }} bioGov-strapi:latest
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: il-central-1 # Israel (Tel Aviv) region
+
+      - name: 🔑 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 📦 Push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: biogov-strapi
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag bioGov-strapi:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag bioGov-strapi:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: 🚀 Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login to ECR
+            aws ecr get-login-password --region il-central-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+
+            # Pull latest image
+            docker pull ${{ steps.login-ecr.outputs.registry }}/biogov-strapi:latest
+
+            # Stop old container
+            docker stop strapi || true
+            docker rm strapi || true
+
+            # Run new container
+            docker run -d \
+              --name strapi \
+              --restart unless-stopped \
+              -p 1337:1337 \
+              -e DATABASE_HOST=${{ secrets.STRAPI_DB_HOST }} \
+              -e DATABASE_PORT=${{ secrets.STRAPI_DB_PORT }} \
+              -e DATABASE_NAME=${{ secrets.STRAPI_DB_NAME }} \
+              -e DATABASE_USERNAME=${{ secrets.STRAPI_DB_USERNAME }} \
+              -e DATABASE_PASSWORD=${{ secrets.STRAPI_DB_PASSWORD }} \
+              -e ADMIN_JWT_SECRET=${{ secrets.STRAPI_ADMIN_JWT_SECRET }} \
+              -e API_TOKEN_SALT=${{ secrets.STRAPI_API_TOKEN_SALT }} \
+              ${{ steps.login-ecr.outputs.registry }}/biogov-strapi:latest
+
+            # Clean up old images
+            docker image prune -f
+
+      - name: 🧪 Health check
+        run: |
+          sleep 30 # Wait for container to start
+          curl -f https://strapi.biogov.il/_health || exit 1
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "## 🚀 Strapi CMS Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://strapi.biogov.il" >> $GITHUB_STEP_SUMMARY
+          echo "**Admin:** https://strapi.biogov.il/admin" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment successful!" >> $GITHUB_STEP_SUMMARY
