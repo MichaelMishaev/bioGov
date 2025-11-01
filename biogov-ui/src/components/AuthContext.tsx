@@ -38,10 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         setUser(data.user);
       } else {
+        // 401 is expected when user is not logged in - don't log as error
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      // Only log unexpected errors (network issues, etc.)
+      // 401 responses are expected for public pages
       setUser(null);
     } finally {
       setLoading(false);

@@ -120,7 +120,7 @@ export default function QuizPage() {
   const [answers, setAnswers] = useState<Partial<QuizAnswers>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [language, setLanguage] = useState<Language>("he");
-  const [showHelp, setShowHelp] = useState(false);
+  const [showHelp, setShowHelp] = useState<{ [key: number]: boolean }>({});
 
   const currentField = questions[currentQuestion].field;
   const selectedAnswer = answers[currentField];
@@ -134,6 +134,8 @@ export default function QuizPage() {
   const handleNext = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
+      // Reset help state when moving to next question
+      setShowHelp({});
     } else {
       handleSubmit();
     }
@@ -254,11 +256,11 @@ export default function QuizPage() {
             {helpText && (
               <div className="mt-4">
                 <button
-                  onClick={() => setShowHelp(!showHelp)}
+                  onClick={() => setShowHelp({ ...showHelp, [currentQuestion]: !showHelp[currentQuestion] })}
                   className="w-full p-4 bg-[#262626] rounded-lg border-2 border-[#0f62fe] hover:bg-[#393939] transition-all text-right"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-2xl">{showHelp ? "▼" : "▶"}</span>
+                    <span className="text-2xl">{showHelp[currentQuestion] ? "▼" : "▶"}</span>
                     <div className="flex-1">
                       <span className="text-lg font-medium text-[#0f62fe]">
                         {helpText.title}
@@ -269,7 +271,7 @@ export default function QuizPage() {
                 </button>
 
                 {/* Expanded Help Content */}
-                {showHelp && (
+                {showHelp[currentQuestion] && (
                   <div className="mt-3 p-6 bg-[#0f62fe] bg-opacity-10 border-2 border-[#0f62fe] rounded-lg space-y-4 animate-slide-down">
                     {helpText.content.map((text, index) => (
                       <div key={index} className="flex items-start gap-3">
