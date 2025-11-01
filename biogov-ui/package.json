@@ -11,7 +11,11 @@
     "test:watch": "NODE_ENV=test jest --watch",
     "test:coverage": "NODE_ENV=test jest --coverage",
     "test:verbose": "NODE_ENV=test jest --verbose",
-    "test:ci": "NODE_ENV=test jest --ci --coverage --maxWorkers=2"
+    "test:ci": "NODE_ENV=test jest --ci --coverage --maxWorkers=2",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.1",
