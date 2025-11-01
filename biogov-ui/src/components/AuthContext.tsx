@@ -14,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, consent: boolean) => Promise<void>;
+  signup: (email: string, password: string, name: string, consent: boolean, redirectPath?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/dashboard');
   };
 
-  const signup = async (email: string, password: string, name: string, consent: boolean) => {
+  const signup = async (email: string, password: string, name: string, consent: boolean, redirectPath?: string) => {
     if (!consent) {
       throw new Error('יש להסכים לתנאי השימוש');
     }
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     setUser(data.user);
-    router.push('/onboarding');
+    router.push(redirectPath || '/onboarding');
   };
 
   const logout = async () => {

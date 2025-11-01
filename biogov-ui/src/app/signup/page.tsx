@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { AlertCircle, Check, X } from 'lucide-react';
 
 export default function SignupPage() {
   const { signup } = useAuth();
+  const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,7 +48,9 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await signup(email, password, name, consent);
+      // Get redirect parameter from URL
+      const redirectPath = searchParams.get('redirect');
+      await signup(email, password, name, consent, redirectPath ? `/${redirectPath}` : undefined);
     } catch (err: any) {
       setError(err.message || 'שגיאה בהרשמה');
     } finally {

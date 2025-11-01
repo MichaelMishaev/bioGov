@@ -39,11 +39,35 @@ export default function OnboardingPage() {
   const [employeeCount, setEmployeeCount] = useState('');
   const [city, setCity] = useState('');
 
+  // VAT assessment from quiz
+  const [vatAssessment, setVatAssessment] = useState<any>(null);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
+
+  useEffect(() => {
+    // Load VAT assessment from sessionStorage
+    const saved = sessionStorage.getItem('vatAssessment');
+    if (saved) {
+      try {
+        const assessment = JSON.parse(saved);
+        setVatAssessment(assessment);
+
+        // Pre-select business type based on VAT status
+        if (assessment.status === 'פטור') {
+          setBusinessType('osek_patur');
+        } else if (assessment.status === 'מורשה') {
+          setBusinessType('osek_murshe');
+        }
+        // For 'choice', let user select
+      } catch (error) {
+        console.error('Failed to parse VAT assessment:', error);
+      }
+    }
+  }, []);
 
   const handleNext = () => {
     if (step === 1 && !businessType) {
@@ -69,13 +93,35 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
+      // Map UI business type to API enum
+      const businessTypeMap: Record<string, string> = {
+        'osek_patur': 'sole_proprietor',
+        'osek_murshe': 'sole_proprietor',
+        'ltd': 'company',
+      };
+
+      // Map UI business type to VAT status
+      const vatStatusMap: Record<string, string> = {
+        'osek_patur': 'exempt',
+        'osek_murshe': 'registered',
+        'ltd': 'registered',
+      };
+
+      // Use VAT assessment data if available, otherwise derive from businessType
+      const apiBusinessType = businessTypeMap[businessType] || 'sole_proprietor';
+      const apiVatStatus = vatAssessment
+        ? (vatAssessment.status === 'פטור' ? 'exempt' : 'registered')
+        : (vatStatusMap[businessType] || 'pending');
+
+      // Save business profile
       const response = await fetch('/api/business-profiles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessType,
+          business_type: apiBusinessType,
+          vat_status: apiVatStatus,
           industry,
-          employeeCount: parseInt(employeeCount) || 0,
+          employee_count: parseInt(employeeCount) || 0,
           municipality: city,
         }),
       });
@@ -86,11 +132,36 @@ export default function OnboardingPage() {
         throw new Error(data.error || 'Failed to create business profile');
       }
 
+      // Generate tasks based on business profile
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const ninetyDaysFromNow = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        const tasksResponse = await fetch('/api/tasks/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            start_date: today,
+            end_date: ninetyDaysFromNow,
+          }),
+        });
+
+        if (!tasksResponse.ok) {
+          console.warn('Task generation failed, but profile was created');
+        }
+      } catch (taskError) {
+        console.error('Failed to generate tasks:', taskError);
+        // Don't block onboarding if task generation fails
+      }
+
+      // Clear VAT assessment from sessionStorage
+      sessionStorage.removeItem('vatAssessment');
+
       setSuccess(true);
 
-      // Redirect to dashboard after 2 seconds
+      // Redirect to dashboard with welcome parameter
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/dashboard?welcome=true');
       }, 2000);
     } catch (err: any) {
       setError(err.message || 'שגיאה ביצירת פרופיל עסקי');

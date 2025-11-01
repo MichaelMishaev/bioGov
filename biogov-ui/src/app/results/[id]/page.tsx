@@ -296,6 +296,31 @@ export default function ResultsPage() {
             </div>
           </div>
 
+          {/* Calendar CTA */}
+          <div className="bg-[#0f62fe]/10 border border-[#0f62fe] rounded-lg p-6 mb-8">
+            <h3 className="text-xl font-bold text-[#f4f4f4] mb-2">
+              🗓️ רוצה לקבל תזכורות אוטומטיות לכל המועדים?
+            </h3>
+            <p className="text-[#c6c6c6] mb-4">
+              בנה לוח שנה אישי עם כל המועדים הרלוונטיים לעסק שלך - מע"מ, מס הכנסה, ביטוח לאומי ועוד
+            </p>
+            <Button
+              onClick={() => {
+                // Save VAT status to sessionStorage for onboarding
+                sessionStorage.setItem('vatAssessment', JSON.stringify({
+                  status: result.status,
+                  assessmentId: assessmentId,
+                  timestamp: new Date().toISOString()
+                }));
+                // Redirect to signup (or dashboard if already logged in)
+                router.push('/signup?redirect=onboarding');
+              }}
+              className="w-full bg-[#0f62fe] hover:bg-[#0353e9] text-white py-4 text-lg font-semibold"
+            >
+              בנה לוח שנה אישי בחינם →
+            </Button>
+          </div>
+
           {/* Email Signup */}
           {!emailSuccess && (
             <div className="bg-[#262626] rounded-lg p-8 mb-8">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { ComplianceScore } from '@/components/ComplianceScore';
 import { TaskList } from '@/components/TaskList';
@@ -25,11 +25,13 @@ type ViewMode = 'overview' | 'list' | 'calendar';
 export default function DashboardPage() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -37,6 +39,16 @@ export default function DashboardPage() {
       router.push('/login');
     }
   }, [user, authLoading, router]);
+
+  // Check for welcome parameter
+  useEffect(() => {
+    const isWelcome = searchParams.get('welcome') === 'true';
+    if (isWelcome) {
+      setShowWelcome(true);
+      // Auto-hide after 10 seconds
+      setTimeout(() => setShowWelcome(false), 10000);
+    }
+  }, [searchParams]);
 
   // Fetch tasks
   useEffect(() => {
@@ -198,6 +210,32 @@ export default function DashboardPage() {
             לוח שנה
           </Button>
         </div>
+
+        {/* Welcome Message */}
+        {showWelcome && (
+          <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 rounded-lg shadow-lg animate-fade-in">
+            <div className="flex items-start gap-4">
+              <span className="text-4xl">🎉</span>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-green-700 mb-2">
+                  הלוח שנה שלך מוכן!
+                </h3>
+                <p className="text-gray-700 text-lg mb-1">
+                  יצרנו עבורך {tasks.length} משימות אישיות על סמך פרטי העסק שלך
+                </p>
+                <p className="text-gray-600">
+                  המערכת תזכיר לך אוטומטית על כל מועד חשוב - מע"מ, מס הכנסה, ביטוח לאומי ועוד
+                </p>
+              </div>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Overview Mode */}
         {viewMode === 'overview' && (
