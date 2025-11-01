@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/AuthContext";
 
 const rubik = Rubik({
   subsets: ["hebrew", "latin"],
@@ -10,8 +11,8 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
-  title: "bioGov - UI Showcase",
-  description: "Modern UI components for Israeli SMB bureaucracy",
+  title: "bioGov - ניהול ציות עסקי",
+  description: "מערכת לניהול ציות ממשלתי לעסקים קטנים ובינוניים בישראל",
 };
 
 export default function RootLayout({
@@ -21,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl" className={rubik.variable}>
-      <body className="font-sans antialiased bg-background">{children}</body>
+      <body className="font-sans antialiased bg-background">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

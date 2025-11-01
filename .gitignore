@@ -77,3 +77,9 @@ dump.rdb
 
 # Prisma
 prisma/migrations/**/migration.sql.bak
+
+# Playwright MCP
+.playwright-mcp-profile/
+.playwright-mcp-output/
+link-check-report.md
+link-check-playwright-report.md

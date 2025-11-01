@@ -1,0 +1,51 @@
+{
+  "browserLaunchOptions": {
+    "headless": true,
+    "args": [
+      "--disable-blink-features=AutomationControlled",
+      "--disable-dev-shm-usage",
+      "--no-sandbox"
+    ]
+  },
+  "browserContextOptions": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "locale": "he-IL",
+    "timezoneId": "Asia/Jerusalem",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "permissions": ["clipboard-read", "clipboard-write"],
+    "geolocation": {
+      "longitude": 34.7818,
+      "latitude": 32.0853
+    },
+    "ignoreHTTPSErrors": false
+  },
+  "serverOptions": {
+    "port": null,
+    "isolated": false,
+    "storageState": null
+  },
+  "capabilities": {
+    "tabs": true,
+    "install": true,
+    "pdf": true,
+    "vision": false
+  },
+  "networkRules": {
+    "blockPatterns": [
+      "**/analytics.google.com/**",
+      "**/doubleclick.net/**",
+      "**/facebook.com/tr/**",
+      "**/google-analytics.com/**",
+      "**/googletagmanager.com/**"
+    ],
+    "allowPatterns": [
+      "**/*.gov.il/**",
+      "**/*.btl.gov.il/**",
+      "**/*.data.gov.il/**"
+    ]
+  },
+  "outputDir": ".playwright-mcp-output"
+}
