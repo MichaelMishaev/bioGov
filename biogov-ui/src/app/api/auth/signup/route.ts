@@ -11,6 +11,10 @@ import {
   validatePassword,
   generateSecureToken,
   hashToken,
+  generateAccessToken,
+  generateRefreshToken,
+  getAccessTokenCookieConfig,
+  getRefreshTokenCookieConfig,
 } from '@/lib/auth';
 
 interface SignupRequest {
@@ -175,14 +179,50 @@ export async function POST(request: NextRequest) {
     console.log('🔑 Verification token (dev only):', verificationToken);
 
     // ========================================================================
-    // Response
+    // Create Authentication Session (Auto-login after signup)
     // ========================================================================
 
-    return NextResponse.json(
+    // Generate JWT tokens
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
+    const refreshTokenHash = hashToken(refreshToken);
+
+    // Calculate expiry times
+    const accessTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create session in database
+    await query(
+      `INSERT INTO public.auth_sessions (
+        user_id,
+        refresh_token_hash,
+        access_token_expires_at,
+        refresh_token_expires_at,
+        ip_address,
+        user_agent
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        user.id,
+        refreshTokenHash,
+        accessTokenExpiresAt,
+        refreshTokenExpiresAt,
+        ipAddress,
+        userAgent,
+      ]
+    );
+
+    console.log('✅ Authentication session created for user:', user.id);
+
+    // ========================================================================
+    // Response with Authentication Cookies
+    // ========================================================================
+
+    const response = NextResponse.json(
       {
         success: true,
         message:
-          'Account created successfully. Please check your email to verify your account.',
+          'Account created successfully. You are now logged in.',
         user: {
           id: user.id,
           email: user.email,
@@ -196,6 +236,15 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
+
+    // Set authentication cookies
+    const accessCookieConfig = getAccessTokenCookieConfig();
+    const refreshCookieConfig = getRefreshTokenCookieConfig();
+
+    response.cookies.set('access_token', accessToken, accessCookieConfig);
+    response.cookies.set('refresh_token', refreshToken, refreshCookieConfig);
+
+    return response;
   } catch (error: any) {
     console.error('Signup error:', error);
 
