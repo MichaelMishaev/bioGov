@@ -185,6 +185,7 @@ export async function POST(request: NextRequest) {
     // Generate JWT tokens
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
+    const accessTokenHash = hashToken(accessToken);
     const refreshTokenHash = hashToken(refreshToken);
 
     // Calculate expiry times
@@ -195,15 +196,17 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO public.auth_sessions (
         user_id,
+        access_token_hash,
         refresh_token_hash,
         access_token_expires_at,
         refresh_token_expires_at,
         ip_address,
         user_agent
       )
-      VALUES ($1, $2, $3, $4, $5, $6)`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         user.id,
+        accessTokenHash,
         refreshTokenHash,
         accessTokenExpiresAt,
         refreshTokenExpiresAt,
