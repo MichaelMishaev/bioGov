@@ -13,8 +13,8 @@ import {
   hashToken,
   generateAccessToken,
   generateRefreshToken,
-  getAccessTokenCookieConfig,
-  getRefreshTokenCookieConfig,
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
 } from '@/lib/auth';
 
 interface SignupRequest {
@@ -238,11 +238,11 @@ export async function POST(request: NextRequest) {
     );
 
     // Set authentication cookies
-    const accessCookieConfig = getAccessTokenCookieConfig();
-    const refreshCookieConfig = getRefreshTokenCookieConfig();
+    const accessCookieOptions = getAccessTokenCookieOptions();
+    const refreshCookieOptions = getRefreshTokenCookieOptions();
 
-    response.cookies.set('access_token', accessToken, accessCookieConfig);
-    response.cookies.set('refresh_token', refreshToken, refreshCookieConfig);
+    response.cookies.set('access_token', accessToken, accessCookieOptions);
+    response.cookies.set('refresh_token', refreshToken, refreshCookieOptions);
 
     return response;
   } catch (error: any) {
