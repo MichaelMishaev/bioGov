@@ -1,0 +1,8 @@
+ 4. Sign up with:
+    - Name: Test User
+    - Email: newuser@test.com 
+    - Password: TestPass123!
+    - ✅ Check consent box
+  5. Click "Sign Up" → Should auto-login! ✅
+  6. Complete onboarding → Fill business details
+  7. See dashboard with tasks!

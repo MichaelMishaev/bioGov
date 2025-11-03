@@ -7,8 +7,14 @@ import { ComplianceScore } from '@/components/ComplianceScore';
 import { TaskList } from '@/components/TaskList';
 import { CalendarView } from '@/components/CalendarView';
 import { TaskDetailsModal } from '@/components/TaskDetailsModal';
+import CashFlowWidget from '@/components/finances/CashFlowWidget';
+import UnpaidInvoicesWidget from '@/components/finances/UnpaidInvoicesWidget';
+import ProfitLossWidget from '@/components/finances/ProfitLossWidget';
+import { TaskCardSkeleton } from '@/components/TaskCardSkeleton';
+import { Celebration } from '@/components/ui/celebration';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   LayoutDashboard,
   List,
@@ -17,6 +23,15 @@ import {
   User,
   Bell,
   Settings,
+  Info,
+  HelpCircle,
+  AlertCircle,
+  TrendingUp,
+  DollarSign,
+  FileText,
+  Plus,
+  Send,
+  Receipt,
 } from 'lucide-react';
 import { Task } from '@/types/task';
 
@@ -32,6 +47,7 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -61,8 +77,13 @@ export default function DashboardPage() {
     try {
       const response = await fetch('/api/tasks');
       if (response.ok) {
-        const data = await response.json();
-        setTasks(data.tasks || []);
+        const result = await response.json();
+        // API returns { success: true, data: { tasks: [...], pagination: {...} } }
+        setTasks(result.data?.tasks || []);
+      } else {
+        console.error('Failed to fetch tasks. Status:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error details:', errorData);
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -86,6 +107,9 @@ export default function DashboardPage() {
               : task
           )
         );
+
+        // Trigger celebration animation
+        setShowCelebration(true);
       }
     } catch (error) {
       console.error('Failed to complete task:', error);
@@ -142,7 +166,7 @@ export default function DashboardPage() {
     })
     .slice(0, 5);
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -154,125 +178,276 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/20">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-primary">bioGov</h1>
-              <span className="text-muted-foreground">|</span>
-              <span className="text-muted-foreground">לוח בקרה</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* Modern Hero Header with Gradient - Animated */}
+      <header className="gradient-hero animate-gradient text-white sticky top-0 z-10 shadow-xl">
+        <div className="container mx-auto container-mobile py-4 sm:py-6 fade-in">
+          {/* Top Bar - Logo and Actions */}
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold">bioGov</h1>
+              <span className="text-white/60 hidden sm:inline">|</span>
+              <span className="text-white/80 text-sm sm:text-base hidden sm:inline">לוח בקרה</span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon">
-                <Bell className="w-5 h-5" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
-              <Button variant="ghost" size="icon">
-                <Settings className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">{user?.name}</span>
               </div>
-              <Button variant="outline" onClick={logout}>
+              <Button
+                variant="outline"
+                onClick={logout}
+                className="border-white/30 text-white hover:bg-white/20 hidden sm:flex"
+              >
                 <LogOut className="w-4 h-4 ml-2" />
                 יציאה
               </Button>
             </div>
           </div>
+
+          {/* User Greeting - Animated */}
+          <div className="mb-4 sm:mb-6 slide-up">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 leading-tight">
+              שלום, {user?.name || 'משתמש'} <span className="inline-block animate-bounce-slow">👋</span>
+            </h2>
+            <p className="text-white/80 text-xs sm:text-sm md:text-base">הנה סקירת המצב העסקי שלך היום</p>
+          </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* View Mode Tabs */}
-        <div className="flex gap-2 mb-6">
+      <div className="container mx-auto container-mobile py-6 sm:py-8">
+        {/* View Mode Tabs - Mobile-first */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
           <Button
             variant={viewMode === 'overview' ? 'default' : 'outline'}
             onClick={() => setViewMode('overview')}
+            size="sm"
+            className="sm:h-11 sm:px-5 whitespace-nowrap"
           >
             <LayoutDashboard className="w-4 h-4 ml-2" />
-            סקירה כללית
+            <span className="hidden sm:inline">סקירה כללית</span>
+            <span className="sm:hidden">סקירה</span>
           </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             onClick={() => setViewMode('list')}
+            size="sm"
+            className="sm:h-11 sm:px-5 whitespace-nowrap"
           >
             <List className="w-4 h-4 ml-2" />
-            רשימת משימות
+            <span className="hidden sm:inline">רשימת משימות</span>
+            <span className="sm:hidden">משימות</span>
           </Button>
           <Button
             variant={viewMode === 'calendar' ? 'default' : 'outline'}
             onClick={() => setViewMode('calendar')}
+            size="sm"
+            className="sm:h-11 sm:px-5 whitespace-nowrap"
           >
             <CalendarIcon className="w-4 h-4 ml-2" />
-            לוח שנה
+            <span className="hidden sm:inline">לוח שנה</span>
+            <span className="sm:hidden">לוח</span>
           </Button>
         </div>
 
-        {/* Welcome Message */}
+        {/* Welcome Message - Animated */}
         {showWelcome && (
-          <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 rounded-lg shadow-lg animate-fade-in">
-            <div className="flex items-start gap-4">
-              <span className="text-4xl">🎉</span>
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-green-700 mb-2">
-                  הלוח שנה שלך מוכן!
-                </h3>
-                <p className="text-gray-700 text-lg mb-1">
-                  יצרנו עבורך {tasks.length} משימות אישיות על סמך פרטי העסק שלך
-                </p>
-                <p className="text-gray-600">
-                  המערכת תזכיר לך אוטומטית על כל מועד חשוב - מע"מ, מס הכנסה, ביטוח לאומי ועוד
-                </p>
+          <Card className="mb-6 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20 shadow-lg slide-up">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <span className="text-3xl sm:text-4xl">🎉</span>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2">ברוכים הבאים ל-bioGov!</h2>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4">
+                    המערכת שלנו ליוותה אתכם בתהליך ההרשמה ויצרה עבורכם לוח משימות אישי מותאם לסוג העסק שלכם.
+                  </p>
+                  <div className="bg-white/50 rounded-lg p-3 sm:p-4 border border-primary/10">
+                    <h3 className="font-semibold text-sm sm:text-base mb-2">💡 מה תמצאו כאן?</h3>
+                    <ul className="space-y-1 text-xs sm:text-sm mr-4">
+                      <li>• מעקב אחר כל המשימות והתאריכים החשובים</li>
+                      <li>• תזכורות אוטומטיות למועדים קרובים</li>
+                      <li>• קישורים ישירים לטפסים ושירותים ממשלתיים</li>
+                      <li>• חישוב ציון תאימות אוטומטי</li>
+                    </ul>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowWelcome(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                >
+                  ×
+                </button>
               </div>
-              <button
-                onClick={() => setShowWelcome(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Overview Mode */}
         {viewMode === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Compliance Score */}
-            <div className="lg:col-span-1">
-              <ComplianceScore
-                score={score}
-                trend={trend}
-                totalTasks={tasks.length}
-                completedTasks={completedTasks}
-                overdueTasks={overdueTasks}
-              />
+          <>
+            {/* Quick Actions Bar - Prominent */}
+            <Card className="mb-6 bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  פעולות מהירות
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Button
+                    className="h-auto py-4 flex flex-col items-center gap-2 bg-primary hover:bg-primary/90"
+                    onClick={() => window.location.href = '/dashboard/invoices/new'}
+                  >
+                    <FileText className="w-6 h-6" />
+                    <span className="text-sm font-medium">צור חשבונית</span>
+                  </Button>
+                  <Button
+                    className="h-auto py-4 flex flex-col items-center gap-2 bg-secondary hover:bg-secondary/90"
+                    onClick={() => window.location.href = '/dashboard/expenses/new'}
+                  >
+                    <Receipt className="w-6 h-6" />
+                    <span className="text-sm font-medium">הוסף הוצאה</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto py-4 flex flex-col items-center gap-2 border-primary/30 hover:bg-primary/5"
+                    onClick={() => window.location.href = '/dashboard/invoices?status=unpaid'}
+                  >
+                    <Send className="w-6 h-6" />
+                    <span className="text-sm font-medium">שלח תזכורת</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto py-4 flex flex-col items-center gap-2 border-primary/30 hover:bg-primary/5"
+                    onClick={() => window.location.href = '/dashboard/finances'}
+                  >
+                    <TrendingUp className="w-6 h-6" />
+                    <span className="text-sm font-medium">דוחות כספיים</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Financial Dashboard Section - Full Width */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                  סקירה כספית
+                </h2>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/dashboard/finances'}
+                  className="hidden sm:flex"
+                >
+                  צפה בדף הפיננסים המלא ←
+                </Button>
+              </div>
+
+              {/* Financial Widgets Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <CashFlowWidget />
+                <UnpaidInvoicesWidget />
+              </div>
+
+              {/* P&L Widget - Full Width for Prominence */}
+              <div className="mb-6">
+                <ProfitLossWidget />
+              </div>
+            </div>
+
+            {/* Compliance Section - Staggered Animation */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-stagger">
+              {/* Left Column - Compliance Score */}
+              <div className="lg:col-span-1 space-y-6">
+                <ComplianceScore
+                  score={score}
+                  trend={trend}
+                  totalTasks={tasks.length}
+                  completedTasks={completedTasks}
+                  overdueTasks={overdueTasks}
+                />
+
+              {/* Compliance Score Explanation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Info className="w-5 h-5" />
+                    מה זה ציון תאימות?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground space-y-3">
+                  <p>
+                    ציון התאימות מחושב על בסיס אחוז המשימות שהושלמו במועד והמשימות שממתינות לטיפול.
+                  </p>
+                  <div className="bg-muted/30 p-3 rounded-md">
+                    <p className="font-medium mb-2 text-foreground">למה זה חשוב?</p>
+                    <p className="mb-2">שמירה על ציון תאימות גבוה מסייעת:</p>
+                    <ul className="mr-4 space-y-1">
+                      <li>• למנוע קנסות וקנסות פיגורים</li>
+                      <li>• לשמור על תקינות מול רשויות המס והביטוח הלאומי</li>
+                      <li>• לקבל הנחות בביטוח עסקי (במקרים מסוימים)</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Task Categories Explanation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">📋 הסבר על סוגי המשימות</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm space-y-3">
+                  <div>
+                    <h4 className="font-semibold text-primary">מס הכנסה</h4>
+                    <p className="text-muted-foreground">דיווחים ותשלומים לרשות המסים - מקדמות רבעוניות, דוח שנתי</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-primary">ביטוח לאומי</h4>
+                    <p className="text-muted-foreground">תשלומים חודשיים ודיווחים לביטוח הלאומי</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-primary">רישוי עסקים</h4>
+                    <p className="text-muted-foreground">חידושים שנתיים ואישורים ממשרדי ממשלה</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-primary">משאבי אנוש</h4>
+                    <p className="text-muted-foreground">תלושי שכר, ניהול חופשות, ודיווחי שעות עבודה</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Right Column - Upcoming Tasks */}
             <div className="lg:col-span-2 space-y-6">
               {/* Overdue Alert */}
               {overdueTasks > 0 && (
-                <Card className="border-red-300 bg-red-50">
-                  <CardHeader>
-                    <CardTitle className="text-red-600">
-                      יש לך {overdueTasks} משימות באיחור
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-red-600 mb-3">
-                      משימות אלו דורשות תשומת לב מיידית כדי למנוע קנסות או בעיות משפטיות.
-                    </p>
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>שים לב! יש לך {overdueTasks} משימות באיחור</AlertTitle>
+                  <AlertDescription>
+                    <p className="mb-2">איחורים עלולים לגרום לקנסות וחובות:</p>
+                    <ul className="mr-4 text-sm space-y-1 mb-3">
+                      <li>• קנס על איחור בהגשת מע״מ: עד 1,540 ₪</li>
+                      <li>• קנס על איחור בתשלום לביטוח לאומי: 2-5% מהחוב</li>
+                      <li>• סגירת עסק בגין אי-חידוש רישיון</li>
+                    </ul>
                     <Button
-                      variant="destructive"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 bg-white hover:bg-gray-50"
                       onClick={() => setViewMode('list')}
                     >
-                      צפה במשימות באיחור
+                      הצג משימות באיחור
                     </Button>
-                  </CardContent>
-                </Card>
+                  </AlertDescription>
+                </Alert>
               )}
 
               {/* Upcoming Tasks */}
@@ -281,7 +456,13 @@ export default function DashboardPage() {
                   <CardTitle>משימות קרובות (30 ימים הקרובים)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {upcomingTasks.length === 0 ? (
+                  {loading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <TaskCardSkeleton key={i} />
+                      ))}
+                    </div>
+                  ) : upcomingTasks.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
                       אין משימות קרובות
                     </p>
@@ -319,8 +500,62 @@ export default function DashboardPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Getting Help Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HelpCircle className="w-5 h-5" />
+                    זקוק לעזרה?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-medium mb-2">🏛️ אתרי ממשלה רלוונטיים:</p>
+                      <ul className="mr-4 space-y-1 text-muted-foreground">
+                        <li>
+                          • <a href="https://www.gov.il" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            שירות לאומי דיגיטלי - Gov.il
+                          </a>
+                        </li>
+                        <li>
+                          • <a href="https://www.mas.gov.il" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            רשות המסים
+                          </a>
+                        </li>
+                        <li>
+                          • <a href="https://www.btl.gov.il" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            הביטוח הלאומי
+                          </a>
+                        </li>
+                        <li>
+                          • <a href="https://www.economy.gov.il" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            משרד הכלכלה - רישוי עסקים
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium mb-2">📞 מוקדי שירות:</p>
+                      <ul className="mr-4 space-y-1 text-muted-foreground">
+                        <li>• מס הכנסה: *4954 | 02-5656400</li>
+                        <li>• ביטוח לאומי: *6050 | 08-6709999</li>
+                        <li>• רישוי עסקים: לפי עירייה</li>
+                      </ul>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      <p className="text-blue-900 text-xs">
+                        <strong>שימו לב:</strong> bioGov מספקת מידע והכוונה בלבד. המערכת אינה מהווה תחליף לייעוץ מקצועי של רוא״ח או עו״ד.
+                        לפני קבלת החלטות חשובות, מומלץ להתייעץ עם איש מקצוע מוסמך.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
+            </div>
+          </>
         )}
 
         {/* List Mode */}
@@ -344,6 +579,12 @@ export default function DashboardPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onComplete={handleTaskComplete}
+      />
+
+      {/* Celebration Animation */}
+      <Celebration
+        show={showCelebration}
+        onComplete={() => setShowCelebration(false)}
       />
     </div>
   );

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Dialog,
   DialogContent,
@@ -62,8 +64,10 @@ export function TaskDetailsModal({
 
   if (!task) return null;
 
-  const StatusIcon = statusConfig[task.status].icon;
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed';
+  // Derive status from completed_at field if status is not provided
+  const taskStatus = task.status || (task.completedAt ? 'completed' : 'pending');
+  const StatusIcon = statusConfig[taskStatus].icon;
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && taskStatus !== 'completed';
 
   const formatDate = (dateString: string) => {
     try {
@@ -106,9 +110,9 @@ export function TaskDetailsModal({
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-sm">
-            <div className={`flex items-center gap-2 ${statusConfig[task.status].color}`}>
+            <div className={`flex items-center gap-2 ${statusConfig[taskStatus].color}`}>
               <StatusIcon className="w-4 h-4" />
-              <span>{statusConfig[task.status].label}</span>
+              <span>{statusConfig[taskStatus].label}</span>
             </div>
 
             {task.dueDate && (
@@ -127,8 +131,23 @@ export function TaskDetailsModal({
           {/* Description */}
           {task.description && (
             <div>
-              <h3 className="font-semibold mb-2">תיאור</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
+              <h3 className="font-semibold mb-3 text-lg">תיאור</h3>
+              <div className="prose prose-sm max-w-none text-right prose-headings:text-right prose-p:text-right prose-ul:text-right prose-li:text-right">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // Style bold text
+                    strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
+                    // Style paragraphs
+                    p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-gray-700" {...props} />,
+                    // Style lists
+                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 space-y-1 mr-4" {...props} />,
+                    li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
+                  }}
+                >
+                  {task.description}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
 
@@ -166,7 +185,7 @@ export function TaskDetailsModal({
           )}
 
           {/* Completed At */}
-          {task.status === 'completed' && task.completedAt && (
+          {taskStatus === 'completed' && task.completedAt && (
             <div>
               <h3 className="font-semibold mb-2">הושלם בתאריך</h3>
               <p className="text-muted-foreground">{formatDate(task.completedAt)}</p>
@@ -215,7 +234,7 @@ export function TaskDetailsModal({
           )}
 
           {/* Reschedule */}
-          {showReschedule && task.status !== 'completed' && (
+          {showReschedule && taskStatus !== 'completed' && (
             <div>
               <Label htmlFor="reschedule">תאריך יעד חדש</Label>
               <input
@@ -245,7 +264,7 @@ export function TaskDetailsModal({
         </div>
 
         <DialogFooter className="flex gap-2 sm:gap-2">
-          {task.status !== 'completed' && (
+          {taskStatus !== 'completed' && (
             <>
               <Button
                 onClick={handleComplete}

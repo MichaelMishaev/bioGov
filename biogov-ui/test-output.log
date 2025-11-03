@@ -1,0 +1,131 @@
+================================================================
+END-TO-END TEST SUMMARY - bioGov Platform
+================================================================
+
+Test File: /Users/michaelmishayev/Desktop/Projects/bioGov/biogov-ui/tests/end-to-end-flow.spec.ts
+Test Duration: 20.4 seconds
+Status: ✅ PASSED
+
+================================================================
+TEST FLOW
+================================================================
+
+STEP 0: DATABASE CLEANUP
+------------------------
+✅ SUCCESS
+- User ID found: 47e3a692-0ea0-4a68-8411-f99b1d587326
+- Deleted 0 tasks (database was already clean)
+- Deleted 0 business profiles (database was already clean)
+
+STEP 1: LOGIN
+-------------
+✅ SUCCESS
+- Navigated to: http://localhost:3001/login
+- Filled credentials: test@test.com / 12345678
+- Login API returned: HTTP 200
+- Cookies set: access_token, refresh_token
+- Final URL: http://localhost:3001/dashboard
+
+STEP 2: ONBOARDING - BUSINESS TYPE
+-----------------------------------
+✅ SUCCESS
+- Navigated to: http://localhost:3001/onboarding
+- Auth check passed (HTTP 200 for /api/auth/me)
+- Selected: "עוסק פטור" (Exempt Dealer)
+- Progressed to Step 2
+
+STEP 3: ONBOARDING - INDUSTRY
+------------------------------
+✅ SUCCESS
+- Selected: "הייטק ופיתוח תוכנה" (Technology)
+- Backend receives: industry = 'technology'
+- Progressed to Step 3
+
+STEP 4: ONBOARDING - DETAILS
+-----------------------------
+✅ SUCCESS
+- Filled city: "תל אביב"
+- Filled employee count: "3"
+- Submitted form
+- API Response: HTTP 201 (Created)
+- Business profile created successfully
+
+STEP 5: DASHBOARD VERIFICATION
+-------------------------------
+✅ SUCCESS
+- Redirected to: http://localhost:3001/dashboard?welcome=true
+- Welcome parameter present: YES
+- Console errors: NONE
+- Tasks loaded: ⚠️  Could not auto-verify (manual check confirms 26 tasks created)
+
+================================================================
+DATABASE VERIFICATION (Post-Test)
+================================================================
+
+Business Profile:
+-----------------
+✅ Business Type: sole_proprietor
+✅ Industry: technology
+⚠️  City: undefined (BUG - not being saved despite form input)
+✅ Employee Count: 3
+
+Tasks Created:
+--------------
+✅ Total: 26 tasks
+
+Sample tasks created:
+1. מקדמה רבעונית Q1 (Quarterly advance Q1) - High priority
+2. מקדמה רבעונית Q2 (Quarterly advance Q2) - High priority
+3. דוח שנתי למס הכנסה (Annual tax report) - Urgent
+4. דיווח חודשי לביטוח לאומי (Monthly NI report) - High priority
+5. חידוש רישיון עסק (Business license renewal) - Urgent
+6. תלושי שכר חודשיים (Monthly payslips) - Urgent
+7. תשלום ארנונה (Municipal tax payment) - Medium priority
+8. חידוש ביטוח עסקי (Business insurance renewal) - High priority
+... (18 more tasks)
+
+================================================================
+ISSUES FOUND
+================================================================
+
+🐛 BUG #1: City field not saved
+-------------------------------
+Severity: MEDIUM
+Description: The city field ("תל אביב") is filled in the form
+             but not being saved to business_profiles.city column
+Location: /api/business-profiles route (likely missing from INSERT)
+Impact: User's city preference is lost
+Recommendation: Add city to the INSERT query in business profile creation
+
+================================================================
+TEST ARTIFACTS
+================================================================
+
+Screenshots:
+- test-results/01-after-login.png
+- test-results/02-after-step1.png
+- test-results/03-after-step2.png
+- test-results/04-after-step3.png
+- test-results/05-dashboard.png
+
+Logs:
+- Playwright HTML Report: npx playwright show-report
+- Test output: Complete console output captured above
+
+================================================================
+CONCLUSION
+================================================================
+
+✅ The end-to-end flow works successfully
+✅ Database cleanup functions properly
+✅ Authentication persists correctly across pages
+✅ Onboarding wizard navigates through all 3 steps
+✅ Business profile is created
+✅ 26 tasks are automatically generated based on business type
+✅ Dashboard loads with welcome parameter
+
+⚠️  One minor bug: City field not being saved (needs fix)
+
+Overall: TEST PASSED - Core functionality is working as expected
+
+================================================================

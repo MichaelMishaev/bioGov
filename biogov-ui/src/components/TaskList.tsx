@@ -20,11 +20,14 @@ export function TaskList({ tasks, onTaskComplete, onTaskClick }: TaskListProps) 
   const [search, setSearch] = useState('');
 
   const filteredTasks = tasks.filter((task) => {
+    // Derive status from completed_at field if status is not provided
+    const taskStatus = task.status || (task.completedAt ? 'completed' : 'pending');
+
     // Apply status filter
     if (filter === 'overdue') {
-      const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed';
+      const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && taskStatus !== 'completed';
       if (!isOverdue) return false;
-    } else if (filter !== 'all' && task.status !== filter) {
+    } else if (filter !== 'all' && taskStatus !== filter) {
       return false;
     }
 
@@ -44,11 +47,15 @@ export function TaskList({ tasks, onTaskComplete, onTaskClick }: TaskListProps) 
   const getFilterCount = (filterType: FilterType) => {
     if (filterType === 'all') return tasks.length;
     if (filterType === 'overdue') {
-      return tasks.filter(
-        (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'completed'
-      ).length;
+      return tasks.filter((t) => {
+        const taskStatus = t.status || (t.completedAt ? 'completed' : 'pending');
+        return t.dueDate && new Date(t.dueDate) < new Date() && taskStatus !== 'completed';
+      }).length;
     }
-    return tasks.filter((t) => t.status === filterType).length;
+    return tasks.filter((t) => {
+      const taskStatus = t.status || (t.completedAt ? 'completed' : 'pending');
+      return taskStatus === filterType;
+    }).length;
   };
 
   const filters: { value: FilterType; label: string }[] = [

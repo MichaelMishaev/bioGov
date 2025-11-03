@@ -4,26 +4,73 @@
 
 @layer base {
   :root {
+    /* Base colors */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 207 90% 54%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary - Modern Blue (updated from #3B9DDD to #3B82F6) */
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --primary-light: 217 91% 75%;
+    --primary-dark: 217 91% 45%;
+
+    /* Secondary - Light gray backgrounds */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Success - Green for positive/income */
+    --success: 158 64% 52%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 158 64% 95%;
+
+    /* Warning - Amber for attention */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 95%;
+
+    /* Danger - Red for overdue/urgent */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 207 90% 54%;
-    --radius: 0.5rem;
+    --destructive-light: 0 84% 95%;
+
+    /* Muted colors */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Borders and inputs */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+
+    /* Border radius */
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+    /* Spacing scale */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
   }
 }
 
@@ -33,5 +80,332 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "tnum"; /* Tabular figures for numbers */
+  }
+}
+
+@layer components {
+  /* Gradient utilities */
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(262 83% 58%) 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(158 64% 52%) 0%, hsl(217 91% 60%) 100%);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(217 91% 45%) 100%);
+  }
+
+  /* Card hover effect - Enhanced */
+  .card-hover {
+    @apply transition-all duration-300 ease-in-out;
+    position: relative;
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-2 shadow-2xl;
+    transform: translateY(-8px) scale(1.01);
+  }
+
+  .card-hover:active {
+    @apply -translate-y-1;
+    transform: translateY(-4px) scale(0.99);
+  }
+
+  /* Number display styles */
+  .text-display {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tabular-nums;
+  }
+
+  .text-metric {
+    @apply text-2xl md:text-3xl lg:text-4xl font-semibold tabular-nums;
+  }
+
+  /* Shimmer loading effect */
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  .loading-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(210 40% 96%) 0%,
+      hsl(0 0% 98%) 50%,
+      hsl(210 40% 96%) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Success celebration animation */
+  @keyframes celebrate {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .celebrate {
+    animation: celebrate 600ms ease-in-out;
+  }
+
+  /* Number counter animation */
+  @keyframes countUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .number-animate {
+    animation: countUp 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Fade in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 600ms ease-out;
+  }
+
+  /* Slide up animation */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .slide-up {
+    animation: slideUp 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Staggered animations for lists */
+  .animate-stagger > * {
+    animation: slideUp 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+
+  .animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .animate-stagger > *:nth-child(2) { animation-delay: 100ms; }
+  .animate-stagger > *:nth-child(3) { animation-delay: 200ms; }
+  .animate-stagger > *:nth-child(4) { animation-delay: 300ms; }
+  .animate-stagger > *:nth-child(5) { animation-delay: 400ms; }
+  .animate-stagger > *:nth-child(6) { animation-delay: 500ms; }
+
+  /* Pulse animation for important elements */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Animated gradient background */
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+  }
+
+  /* Glow effect on hover */
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px -5px currentColor;
+    }
+    to {
+      box-shadow: 0 0 20px 0px currentColor;
+    }
+  }
+
+  .hover-glow:hover {
+    animation: glow 1s ease-in-out infinite alternate;
+  }
+
+  /* Bounce animation for attention */
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
+  /* Confetti celebration animation */
+  @keyframes confetti {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-confetti {
+    animation: confetti 1.5s ease-out forwards;
+  }
+
+  /* Shine effect for buttons */
+  @keyframes shine {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .button-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    animation: shine 3s infinite;
+  }
+
+  /* Focus visible for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+}
+
+@layer utilities {
+  /* Mobile-first responsive text sizes */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  /* Mobile-first spacing */
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Custom shadows with colors */
+  .shadow-primary {
+    box-shadow: 0 10px 15px -3px hsl(217 91% 60% / 0.15);
+  }
+
+  .shadow-success {
+    box-shadow: 0 10px 15px -3px hsl(158 64% 52% / 0.15);
+  }
+
+  .shadow-danger {
+    box-shadow: 0 10px 15px -3px hsl(0 84% 60% / 0.15);
+  }
+
+  /* Mobile-specific fixes */
+  @media (max-width: 640px) {
+    /* Prevent text overflow on small screens */
+    .mobile-safe-text {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
+    /* Ensure buttons don't shrink too small */
+    button {
+      min-height: 36px;
+    }
+
+    /* Better touch target for mobile */
+    .touch-target {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* Prevent horizontal scroll */
+    body {
+      overflow-x: hidden;
+    }
+
+    /* Ensure gradients render correctly on mobile */
+    .gradient-hero,
+    .gradient-primary,
+    .gradient-success {
+      background-attachment: scroll;
+    }
+  }
+
+  /* Very small screens (< 360px) */
+  @media (max-width: 359px) {
+    /* Extra tight spacing for very small screens */
+    .container-mobile {
+      @apply px-3;
+    }
+
+    /* Smaller text for very small screens */
+    h1 {
+      font-size: 1.25rem;
+    }
+
+    h2 {
+      font-size: 1.125rem;
+    }
+
+    /* Ensure cards don't overflow */
+    .rounded-xl {
+      border-radius: 0.75rem;
+    }
   }
 }

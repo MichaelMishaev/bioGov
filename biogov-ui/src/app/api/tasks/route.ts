@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         t.metadata,
         t.created_at,
         t.updated_at,
-        EXTRACT(DAY FROM (t.due_date - CURRENT_DATE))::INTEGER AS days_until_due,
+        (t.due_date - CURRENT_DATE) AS days_until_due,
         CASE
           WHEN t.completed_at IS NOT NULL THEN 'completed'
           WHEN t.due_date < CURRENT_DATE THEN 'overdue'

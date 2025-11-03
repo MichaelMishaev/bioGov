@@ -15,14 +15,16 @@ const BUSINESS_TYPES = [
   { value: 'ltd', label: 'חברה בע״מ', description: 'חברה פרטית מוגבלת' },
 ];
 
+// Must match VALID_INDUSTRIES in /api/business-profiles/route.ts:
+// 'retail', 'services', 'technology', 'food', 'healthcare', 'construction', 'education', 'finance', 'manufacturing', 'agriculture', 'other'
 const INDUSTRIES = [
-  { value: 'consulting', label: 'ייעוץ וניהול' },
-  { value: 'tech', label: 'הייטק ופיתוח תוכנה' },
+  { value: 'services', label: 'ייעוץ וניהול' },
+  { value: 'technology', label: 'הייטק ופיתוח תוכנה' },
   { value: 'food', label: 'מסעדות ומזון' },
   { value: 'retail', label: 'קמעונאות ומסחר' },
-  { value: 'health', label: 'בריאות ורווחה' },
+  { value: 'healthcare', label: 'בריאות ורווחה' },
   { value: 'construction', label: 'בנייה ושיפוצים' },
-  { value: 'services', label: 'שירותים אחרים' },
+  { value: 'other', label: 'שירותים אחרים' },
 ];
 
 export default function OnboardingPage() {
@@ -91,6 +93,19 @@ export default function OnboardingPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validate Step 3 fields
+    if (!city || city.trim() === '') {
+      setError('נא למלא את שדה העיר');
+      setLoading(false);
+      return;
+    }
+
+    if (!employeeCount || employeeCount.trim() === '') {
+      setError('נא למלא את מספר העובדים');
+      setLoading(false);
+      return;
+    }
 
     try {
       // Map UI business type to API enum

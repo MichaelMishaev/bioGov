@@ -23,11 +23,26 @@ export default defineConfig({
       name: 'Mobile Safari',
       use: { ...devices['iPhone 13'] },
     },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'iPhone 14 Pro',
+      use: { ...devices['iPhone 14 Pro'] },
+    },
+    {
+      name: 'Samsung Galaxy S21',
+      use: {
+        ...devices['Galaxy S9+'],
+        viewport: { width: 360, height: 800 },
+      },
+    },
   ],
 
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3002',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
   },
 });

@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 
 interface ComplianceScoreProps {
   score: number; // 0-100
@@ -46,8 +47,12 @@ export function ComplianceScore({
         {/* Main Score Display */}
         <div className="text-center">
           <div className={`text-6xl font-bold mb-2 ${getScoreColor(score)}`}>
-            {Math.round(score)}
-            <span className="text-3xl">%</span>
+            <AnimatedNumber
+              value={Math.round(score)}
+              duration={1200}
+              suffix="%"
+              className="inline-block"
+            />
           </div>
           <p className="text-lg font-medium text-muted-foreground">
             {getScoreLabel(score)}
@@ -78,14 +83,16 @@ export function ComplianceScore({
           <div className="flex justify-between items-center text-sm">
             <span className="text-muted-foreground">משימות שהושלמו</span>
             <span className="font-semibold">
-              {completedTasks} מתוך {totalTasks}
+              <AnimatedNumber value={completedTasks} duration={800} delay={200} /> מתוך <AnimatedNumber value={totalTasks} duration={800} delay={300} />
             </span>
           </div>
 
           {overdueTasks > 0 && (
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">משימות באיחור</span>
-              <span className="font-semibold text-red-600">{overdueTasks}</span>
+              <span className="font-semibold text-red-600">
+                <AnimatedNumber value={overdueTasks} duration={800} delay={400} />
+              </span>
             </div>
           )}
 
@@ -110,18 +117,20 @@ export function ComplianceScore({
         <div className="grid grid-cols-3 gap-3 pt-4 border-t">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {completedTasks}
+              <AnimatedNumber value={completedTasks} duration={800} delay={500} />
             </div>
             <div className="text-xs text-muted-foreground mt-1">הושלם</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
-              {totalTasks - completedTasks - overdueTasks}
+              <AnimatedNumber value={totalTasks - completedTasks - overdueTasks} duration={800} delay={600} />
             </div>
             <div className="text-xs text-muted-foreground mt-1">פעיל</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">{overdueTasks}</div>
+            <div className="text-2xl font-bold text-red-600">
+              <AnimatedNumber value={overdueTasks} duration={800} delay={700} />
+            </div>
             <div className="text-xs text-muted-foreground mt-1">באיחור</div>
           </div>
         </div>
