@@ -12,6 +12,7 @@ import UnpaidInvoicesWidget from '@/components/finances/UnpaidInvoicesWidget';
 import ProfitLossWidget from '@/components/finances/ProfitLossWidget';
 import { TaskCardSkeleton } from '@/components/TaskCardSkeleton';
 import { Celebration } from '@/components/ui/celebration';
+import { HelpTooltip } from '@/components/help/HelpTooltip';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -180,7 +181,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Modern Hero Header with Gradient - Animated */}
-      <header className="gradient-hero animate-gradient text-white sticky top-0 z-10 shadow-xl">
+      <header role="banner" className="gradient-hero animate-gradient text-white sticky top-0 z-10 shadow-xl">
         <div className="container mx-auto container-mobile py-4 sm:py-6 fade-in">
           {/* Top Bar - Logo and Actions */}
           <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -191,11 +192,20 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/20"
+                aria-label="מרכז העזרה"
+                onClick={() => router.push('/help')}
+              >
+                <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" aria-label="הודעות והתראות">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" aria-label="הגדרות">
+                <Settings className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               </Button>
               <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <User className="w-4 h-4" />
@@ -205,8 +215,9 @@ export default function DashboardPage() {
                 variant="outline"
                 onClick={logout}
                 className="border-white/30 text-white hover:bg-white/20 hidden sm:flex"
+                aria-label="יציאה מהמערכת"
               >
-                <LogOut className="w-4 h-4 ml-2" />
+                <LogOut className="w-4 h-4 ml-2" aria-hidden="true" />
                 יציאה
               </Button>
             </div>
@@ -222,7 +233,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="container mx-auto container-mobile py-6 sm:py-8">
+      <main id="main-content" tabIndex={-1} className="container mx-auto container-mobile py-6 sm:py-8">
         {/* View Mode Tabs - Mobile-first */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
           <Button
@@ -280,9 +291,10 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => setShowWelcome(false)}
+                  aria-label="סגור הודעת ברכה"
                   className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
                 >
-                  ×
+                  <span aria-hidden="true">×</span>
                 </button>
               </div>
             </CardContent>
@@ -571,7 +583,7 @@ export default function DashboardPage() {
         {viewMode === 'calendar' && (
           <CalendarView tasks={tasks} onTaskClick={handleTaskClick} />
         )}
-      </div>
+      </main>
 
       {/* Task Details Modal */}
       <TaskDetailsModal

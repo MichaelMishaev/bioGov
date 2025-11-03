@@ -316,6 +316,89 @@
   *:focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2;
   }
+
+  /* Skip to content link - WCAG 2.4.1 Bypass Blocks */
+  .skip-to-content {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 999;
+    padding: 1rem 1.5rem;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 0 0 0.5rem 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s;
+  }
+
+  .skip-to-content:focus {
+    left: 0;
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .sr-only-focusable:focus,
+  .sr-only-focusable:active {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* Motion reduction support - WCAG 2.3.3 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Disable specific animations */
+    .animate-spin,
+    .animate-pulse,
+    .animate-bounce,
+    .animate-bounce-slow,
+    .animate-pulse-slow,
+    .animate-gradient,
+    .animate-confetti,
+    .button-shine,
+    .hover-glow,
+    .card-hover {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    /* Keep essential transitions but make them instant */
+    .fade-in,
+    .slide-up,
+    .animate-stagger > *,
+    .celebrate,
+    .number-animate {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
 }
 
 @layer utilities {
